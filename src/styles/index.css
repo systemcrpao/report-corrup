@@ -15,7 +15,7 @@
   --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.08);
   --shadow-md: 0 8px 24px rgba(16, 24, 40, 0.1);
   --radius: 12px;
-  --font-sans: "Segoe UI", "Noto Sans Thai", "Sarabun", sans-serif;
+  --font-sans: "Kanit", "Segoe UI", "Noto Sans Thai", sans-serif;
 }
 
 *,
@@ -1011,8 +1011,162 @@ a {
 
 .summary-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.summary-card-v2 {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.15rem;
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  gap: 0.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-card-v2::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--color-primary);
+}
+
+.summary-card-v2.tone-pending::before {
+  background: #f59e0b;
+}
+
+.summary-card-v2.tone-progress::before {
+  background: #2563eb;
+}
+
+.summary-card-v2.tone-closed::before {
+  background: #059669;
+}
+
+.summary-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.15rem;
+}
+
+.summary-card-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.summary-card-percent {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  background: var(--color-bg);
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+}
+
+.summary-card-value {
+  font-size: 2rem;
+  line-height: 1.1;
+  color: var(--color-primary);
+}
+
+.summary-card-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.summary-card-hint {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.summary-card-bar {
+  margin-top: 0.35rem;
+  height: 6px;
+  background: var(--color-bg);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.summary-card-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), #3b82c4);
+  border-radius: 999px;
+}
+
+.summary-card-v2.tone-pending .summary-card-bar span {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.summary-card-v2.tone-progress .summary-card-bar span {
+  background: linear-gradient(90deg, #2563eb, #60a5fa);
+}
+
+.summary-card-v2.tone-closed .summary-card-bar span {
+  background: linear-gradient(90deg, #059669, #34d399);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-header h2 {
+  margin: 0 0 0.25rem;
+}
+
+.dashboard-header p {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.year-filter {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 180px;
+}
+
+.year-filter label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.year-filter select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+}
+
+.stat-card-v2 {
+  min-height: 180px;
+}
+
+.empty-text {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.92rem;
+}
+
+.admin-session-note {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  padding: 0.25rem 0.65rem;
+  background: var(--color-bg);
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
 }
 
 .summary-card {

@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchAllComplaints } from "../../services/adminService.js";
 import { buildComplaintStats, toDate, formatThaiDateTime } from "../../utils/statsUtils.js";
+import { getAvailableYears, filterComplaintsByYear } from "../../utils/yearFilter.js";
+import SummaryCards from "../../components/admin/SummaryCards.jsx";
 import StatsSummary from "../../components/admin/StatsSummary.jsx";
 
 function getStatusClass(status) {
@@ -19,6 +21,7 @@ function getStatusClass(status) {
 
 export default function AdminDashboardPage() {
   const [complaints, setComplaints] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -27,6 +30,10 @@ export default function AdminDashboardPage() {
       try {
         const data = await fetchAllComplaints();
         setComplaints(data);
+        const years = getAvailableYears(data);
+        if (years.length > 0) {
+          setSelectedYear(years[0]);
+        }
       } catch (err) {
         console.error(err);
         setError("ไม่สามารถโหลดข้อมูลได้");
@@ -38,6 +45,16 @@ export default function AdminDashboardPage() {
     loadData();
   }, []);
 
+  const yearOptions = useMemo(() => getAvailableYears(complaints), [complaints]);
+
+  const filteredComplaints = useMemo(
+    () => filterComplaintsByYear(complaints, selectedYear),
+    [complaints, selectedYear]
+  );
+
+  const stats = useMemo(() => buildComplaintStats(filteredComplaints), [filteredComplaints]);
+  const recent = filteredComplaints.slice(0, 5);
+
   if (isLoading) {
     return <p>กำลังโหลดข้อมูล...</p>;
   }
@@ -46,36 +63,41 @@ export default function AdminDashboardPage() {
     return <div className="alert alert-error">{error}</div>;
   }
 
-  const stats = buildComplaintStats(complaints);
-  const recent = complaints.slice(0, 5);
-
   return (
     <section className="admin-page">
-      <header className="section-header">
-        <h2>ภาพรวมระบบ</h2>
-        <p>สรุปข้อมูลเรื่องร้องเรียนทั้งหมด {stats.total} เรื่อง</p>
+      <header className="dashboard-header">
+        <div>
+          <h2>ภาพรวมระบบ</h2>
+          <p>
+            สรุปข้อมูลเรื่องร้องเรียน
+            {selectedYear === "all" ? "ทั้งหมด" : `ปี พ.ศ. ${selectedYear}`}
+            {" "}จำนวน {stats.total} เรื่อง
+          </p>
+        </div>
+
+        <div className="year-filter">
+          <label htmlFor="dashboardYear">เลือกปี (พ.ศ.)</label>
+          <select
+            id="dashboardYear"
+            value={selectedYear}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedYear(value === "all" ? "all" : Number(value));
+            }}
+          >
+            <option value="all">ทุกปี</option>
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>
+                พ.ศ. {year}
+              </option>
+            ))}
+          </select>
+        </div>
       </header>
 
-      <div className="summary-cards">
-        <article className="summary-card">
-          <span>ทั้งหมด</span>
-          <strong>{stats.total}</strong>
-        </article>
-        <article className="summary-card">
-          <span>รอดำเนินการ</span>
-          <strong>{stats.byStatus.find(([s]) => s === "รอดำเนินการ")?.[1] ?? 0}</strong>
-        </article>
-        <article className="summary-card">
-          <span>กำลังตรวจสอบ</span>
-          <strong>{stats.byStatus.find(([s]) => s === "กำลังตรวจสอบ")?.[1] ?? 0}</strong>
-        </article>
-        <article className="summary-card">
-          <span>ยุติเรื่อง</span>
-          <strong>{stats.byStatus.find(([s]) => s === "ยุติเรื่อง")?.[1] ?? 0}</strong>
-        </article>
-      </div>
+      <SummaryCards stats={stats} />
 
-      <StatsSummary stats={stats} />
+      <StatsSummary stats={stats} selectedYear={selectedYear} />
 
       <section className="admin-section">
         <div className="section-header-inline">
@@ -97,24 +119,32 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {recent.map((item) => {
-                const created = toDate(item.createdAt);
-                return (
-                  <tr key={item.id}>
-                    <td>
-                      <Link to={`/admin/complaints/${item.id}`}>{item.trackingId}</Link>
-                    </td>
-                    <td>{item.category}</td>
-                    <td>{item.location?.district ?? "-"}</td>
-                    <td>
-                      <span className={`status-badge ${getStatusClass(item.status)}`}>
-                        {item.status}
-                      </span>
-                    </td>
-                    <td>{created ? formatThaiDateTime(created) : "-"}</td>
-                  </tr>
-                );
-              })}
+              {recent.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="empty-cell">
+                    ไม่มีข้อมูลในปีที่เลือก
+                  </td>
+                </tr>
+              ) : (
+                recent.map((item) => {
+                  const created = toDate(item.createdAt);
+                  return (
+                    <tr key={item.id}>
+                      <td>
+                        <Link to={`/admin/complaints/${item.id}`}>{item.trackingId}</Link>
+                      </td>
+                      <td>{item.category}</td>
+                      <td>{item.location?.district ?? "-"}</td>
+                      <td>
+                        <span className={`status-badge ${getStatusClass(item.status)}`}>
+                          {item.status}
+                        </span>
+                      </td>
+                      <td>{created ? formatThaiDateTime(created) : "-"}</td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

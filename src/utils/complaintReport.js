@@ -1,4 +1,8 @@
 import { toDate, formatThaiDateTime } from "./statsUtils.js";
+import { openPrintDocument, openReportPreview } from "./printDocument.js";
+
+const SARABUN_FONT =
+  '<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />';
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -17,38 +21,11 @@ function formatReportDate(date) {
   });
 }
 
-/**
- * @param {Record<string, unknown>} complaint
- */
-export function buildComplaintReportHtml(complaint) {
-  const created = toDate(complaint.createdAt);
-  const updated = toDate(complaint.updatedAt);
-  const reportDate = new Date().toLocaleDateString("th-TH", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
-  const locationLine = [
-    complaint.location?.address,
-    complaint.location?.subDistrict ? `ต.${complaint.location.subDistrict}` : "",
-    complaint.location?.district ? `อ.${complaint.location.district}` : "",
-    complaint.location?.province ? `จ.${complaint.location.province}` : "จ.เชียงราย",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  const evidenceCount = complaint.evidenceUrls?.length ?? 0;
-
-  return `<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8" />
-  <title>รายงานเรื่องร้องเรียน ${escapeHtml(complaint.trackingId)}</title>
-  <style>
+function reportStyles() {
+  return `
     @page { size: A4; margin: 18mm 16mm; }
     body {
-      font-family: "Sarabun", "Segoe UI", sans-serif;
+      font-family: "Sarabun", sans-serif;
       color: #111;
       line-height: 1.65;
       font-size: 14px;
@@ -111,12 +88,71 @@ export function buildComplaintReportHtml(complaint) {
       font-size: 12px;
       color: #475569;
     }
-    @media print {
-      button { display: none; }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      background: #102a4c;
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
     }
-  </style>
+    .toolbar button {
+      font-family: "Sarabun", sans-serif;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .toolbar .primary { background: #c9a227; color: #111; }
+    .toolbar .secondary { background: #fff; color: #102a4c; }
+    @media print {
+      .toolbar { display: none; }
+    }
+  `;
+}
+
+/**
+ * @param {Record<string, unknown>} complaint
+ */
+export function buildComplaintReportHtml(complaint, { includeToolbar = false } = {}) {
+  const created = toDate(complaint.createdAt);
+  const updated = toDate(complaint.updatedAt);
+  const reportDate = new Date().toLocaleDateString("th-TH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const locationLine = [
+    complaint.location?.address,
+    complaint.location?.subDistrict ? `ต.${complaint.location.subDistrict}` : "",
+    complaint.location?.district ? `อ.${complaint.location.district}` : "",
+    complaint.location?.province ? `จ.${complaint.location.province}` : "จ.เชียงราย",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const evidenceCount = complaint.evidenceUrls?.length ?? 0;
+  const toolbar = includeToolbar
+    ? `<div class="toolbar">
+        <button class="primary" onclick="window.print()">พิมพ์ / บันทึก PDF</button>
+        <button class="secondary" onclick="window.close()">ปิดหน้าต่าง</button>
+      </div>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>รายงานเรื่องร้องเรียน ${escapeHtml(complaint.trackingId)}</title>
+  ${SARABUN_FONT}
+  <style>${reportStyles()}</style>
 </head>
 <body>
+  ${toolbar}
   <div class="header">
     <div class="org">องค์การบริหารส่วนจังหวัดเชียงราย</div>
     <div class="title">รายงานเรื่องร้องเรียนการทุจริต / การประพฤติมิชอบ / การละเว้นการปฏิบัติหน้าที่</div>
@@ -129,38 +165,14 @@ export function buildComplaintReportHtml(complaint) {
   </div>
 
   <table>
-    <tr>
-      <th>ประเภทเรื่อง</th>
-      <td>${escapeHtml(complaint.category)}</td>
-    </tr>
-    <tr>
-      <th>สถานะปัจจุบัน</th>
-      <td>${escapeHtml(complaint.status)}</td>
-    </tr>
-    <tr>
-      <th>วันที่รับแจ้ง</th>
-      <td>${escapeHtml(created ? formatThaiDateTime(created) : "-")}</td>
-    </tr>
-    <tr>
-      <th>อัปเดตล่าสุด</th>
-      <td>${escapeHtml(updated ? formatThaiDateTime(updated) : "-")}</td>
-    </tr>
-    <tr>
-      <th>สถานที่เกิดเหตุ</th>
-      <td>${escapeHtml(locationLine || "-")}</td>
-    </tr>
-    <tr>
-      <th>ผู้แจ้ง</th>
-      <td>${escapeHtml(complaint.informantName || "ไม่เปิดเผยตัวตน")}</td>
-    </tr>
-    <tr>
-      <th>ช่องทางติดต่อ</th>
-      <td>${escapeHtml(complaint.informantContact || "-")}</td>
-    </tr>
-    <tr>
-      <th>หลักฐานแนบ</th>
-      <td>${evidenceCount} ไฟล์</td>
-    </tr>
+    <tr><th>ประเภทเรื่อง</th><td>${escapeHtml(complaint.category)}</td></tr>
+    <tr><th>สถานะปัจจุบัน</th><td>${escapeHtml(complaint.status)}</td></tr>
+    <tr><th>วันที่รับแจ้ง</th><td>${escapeHtml(created ? formatThaiDateTime(created) : "-")}</td></tr>
+    <tr><th>อัปเดตล่าสุด</th><td>${escapeHtml(updated ? formatThaiDateTime(updated) : "-")}</td></tr>
+    <tr><th>สถานที่เกิดเหตุ</th><td>${escapeHtml(locationLine || "-")}</td></tr>
+    <tr><th>ผู้แจ้ง</th><td>${escapeHtml(complaint.informantName || "ไม่เปิดเผยตัวตน")}</td></tr>
+    <tr><th>ช่องทางติดต่อ</th><td>${escapeHtml(complaint.informantContact || "-")}</td></tr>
+    <tr><th>หลักฐานแนบ</th><td>${evidenceCount} ไฟล์</td></tr>
   </table>
 
   <div class="section-title">รายละเอียดเรื่องร้องเรียน</div>
@@ -170,12 +182,8 @@ export function buildComplaintReportHtml(complaint) {
   <div class="detail-box">${escapeHtml(complaint.adminNotes || "—")}</div>
 
   <div class="footer">
-    <div class="sign-box">
-      <div class="sign-line">ผู้จัดทำรายงาน</div>
-    </div>
-    <div class="sign-box">
-      <div class="sign-line">ผู้บริหาร / ผู้รับทราบ</div>
-    </div>
+    <div class="sign-box"><div class="sign-line">ผู้จัดทำรายงาน</div></div>
+    <div class="sign-box"><div class="sign-line">ผู้บริหาร / ผู้รับทราบ</div></div>
   </div>
 
   <p class="note">
@@ -189,28 +197,23 @@ export function buildComplaintReportHtml(complaint) {
 /**
  * @param {Record<string, unknown>} complaint
  */
-export function printComplaintReport(complaint) {
+export async function printComplaintReport(complaint) {
   const html = buildComplaintReportHtml(complaint);
-  const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
 
-  if (!printWindow) {
-    throw new Error("POPUP_BLOCKED");
+  try {
+    await openPrintDocument(html);
+  } catch {
+    openReportPreview(
+      buildComplaintReportHtml(complaint, { includeToolbar: true }),
+      "รายงานเรื่องร้องเรียน"
+    );
   }
-
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
-
-  printWindow.onload = () => {
-    printWindow.focus();
-    printWindow.print();
-  };
 }
 
 /**
  * @param {Array<Record<string, unknown>>} complaints
  */
-export function printComplaintsSummaryReport(complaints) {
+export async function printComplaintsSummaryReport(complaints) {
   const reportDate = new Date().toLocaleDateString("th-TH", {
     year: "numeric",
     month: "long",
@@ -236,9 +239,10 @@ export function printComplaintsSummaryReport(complaints) {
 <head>
   <meta charset="UTF-8" />
   <title>สรุปรายงานเรื่องร้องเรียน</title>
+  ${SARABUN_FONT}
   <style>
     @page { size: A4 landscape; margin: 14mm; }
-    body { font-family: "Sarabun", "Segoe UI", sans-serif; font-size: 13px; }
+    body { font-family: "Sarabun", sans-serif; font-size: 13px; }
     h1 { text-align: center; color: #1e4d8c; font-size: 18px; }
     p.meta { text-align: center; margin-bottom: 16px; }
     table { width: 100%; border-collapse: collapse; }
@@ -252,12 +256,7 @@ export function printComplaintsSummaryReport(complaints) {
   <table>
     <thead>
       <tr>
-        <th>ลำดับ</th>
-        <th>รหัสอ้างอิง</th>
-        <th>ประเภท</th>
-        <th>อำเภอ</th>
-        <th>สถานะ</th>
-        <th>วันที่แจ้ง</th>
+        <th>ลำดับ</th><th>รหัสอ้างอิง</th><th>ประเภท</th><th>อำเภอ</th><th>สถานะ</th><th>วันที่แจ้ง</th>
       </tr>
     </thead>
     <tbody>${rows}</tbody>
@@ -265,14 +264,9 @@ export function printComplaintsSummaryReport(complaints) {
 </body>
 </html>`;
 
-  const printWindow = window.open("", "_blank", "noopener,noreferrer,width=1000,height=700");
-  if (!printWindow) throw new Error("POPUP_BLOCKED");
-
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
-  printWindow.onload = () => {
-    printWindow.focus();
-    printWindow.print();
-  };
+  try {
+    await openPrintDocument(html);
+  } catch {
+    openReportPreview(html, "สรุปรายงานเรื่องร้องเรียน");
+  }
 }

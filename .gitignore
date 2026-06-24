@@ -11,10 +11,13 @@ dist-ssr/
 .env.*.local
 .env.production
 .env.production.local
+.env.development.local
 *.pem
 *.key
 credentials.json
 serviceAccount*.json
+**/serviceAccount*.json
+firebase-adminsdk*.json
 
 # Firebase / Vercel local
 .firebase/

@@ -13,6 +13,12 @@ import {
   where,
 } from "firebase/firestore";
 import { auth, db } from "../firebase.js";
+import {
+  clearAdminSession,
+  extendAdminSession,
+  hasAdminSession,
+  isAdminSessionExpired,
+} from "../utils/sessionManager.js";
 
 /**
  * @typedef {'NOT_ADMIN' | 'PERMISSION_DENIED' | 'AUTH_INVALID' | 'AUTH_DISABLED' | 'AUTH_TOO_MANY' | 'UNKNOWN'} AuthErrorCode
@@ -84,8 +90,11 @@ export async function loginAdmin(email, password) {
 
   if (!result.ok) {
     await signOut(auth);
+    clearAdminSession();
     throw createAuthError(result.reason, result.detail);
   }
+
+  extendAdminSession();
 
   if (result.source === "email" && result.docId !== credential.user.uid) {
     console.warn(
@@ -118,6 +127,7 @@ function mapFirebaseAuthError(error) {
 }
 
 export async function logoutAdmin() {
+  clearAdminSession();
   await signOut(auth);
 }
 
@@ -127,12 +137,29 @@ export async function logoutAdmin() {
 export function subscribeToAdminAuth(callback) {
   return onAuthStateChanged(auth, async (user) => {
     if (!user) {
+      clearAdminSession();
+      callback(null, false);
+      return;
+    }
+
+    if (isAdminSessionExpired()) {
+      await signOut(auth);
+      clearAdminSession();
       callback(null, false);
       return;
     }
 
     const result = await verifyAdminUser(user);
-    callback(result.ok ? user : null, result.ok);
+    if (!result.ok) {
+      callback(null, false);
+      return;
+    }
+
+    if (!hasAdminSession()) {
+      extendAdminSession();
+    }
+
+    callback(user, true);
   });
 }
 

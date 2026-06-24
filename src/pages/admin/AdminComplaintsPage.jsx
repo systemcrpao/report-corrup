@@ -73,15 +73,10 @@ export default function AdminComplaintsPage() {
   }, [complaints, search, statusFilter, districtFilter]);
 
   function handlePrintReport(item) {
-    try {
-      printComplaintReport(item);
-    } catch (err) {
-      if (err?.message === "POPUP_BLOCKED") {
-        setError("เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต popup แล้วลองใหม่");
-      } else {
-        setError("ไม่สามารถสร้างรายงานได้");
-      }
-    }
+    setError("");
+    printComplaintReport(item).catch(() => {
+      setError("ไม่สามารถสร้างรายงานได้ กรุณาลองใหม่อีกครั้ง");
+    });
   }
 
   if (isLoading) {

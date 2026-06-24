@@ -5,83 +5,95 @@
 **Project Name:** Whistleblower & Complaint Management System (ระบบร้องเรียนการทุจริต องค์การบริหารส่วนจังหวัดเชียงราย)
 **Project Year:** 2026 (พ.ศ. 2569)
 **Objective:** A secure, serverless web application for citizens to report corruption, misconduct, or negligence.
-**Key Requirements:** High security, data privacy (anonymous option), fast performance, and anti-spam protection.
+**Repository:** Public GitHub (collaborators) — see `SECURITY.md` for secret handling.
 
 ## 2. Technology Stack
 
-- **Frontend:** React.js (Functional Components, Hooks)
+- **Frontend:** React.js (Functional Components, Hooks), Vite
+- **Fonts:** Kanit (UI), Sarabun (print reports only)
 - **Deployment:** Vercel
 - **Backend & Database:** Firebase Cloud Firestore (NoSQL)
 - **File Storage:** Firebase Storage
-- **Firebase SDK Version:** Modular SDK v9+ (e.g., `import { collection, addDoc } from "firebase/firestore"`)
+- **Auth:** Firebase Auth (admin) + Firestore `admins/{UID}` whitelist
+- **Admin session:** 6-hour localStorage expiry, auto logout (`sessionManager.js`)
+- **Firebase SDK:** Modular SDK v9+ only
 
 ---
 
 ## 3. Database Schema (Firestore)
 
-**Collection Name:** `complaints`
-
-Use the following TypeScript interface as the single source of truth for the data structure:
+**Collection:** `complaints`
 
 ```typescript
 interface Complaint {
-  trackingId: string; // Primary reference for user (Format: 'CR-' + timestamp)
-  category: string; // Dropdown value (e.g., 'ทุจริต', 'ละเว้นการปฏิบัติหน้าที่')
-  details: string; // Detailed description of the incident
-  evidenceUrls: string[]; // Array of Download URLs from Firebase Storage
-  informantName: string; // Can be empty string ('') if anonymous
-  informantContact: string; // Email or Phone. Can be empty string ('')
-  status: "รอดำเนินการ" | "กำลังตรวจสอบ" | "ยุติเรื่อง"; // Current status
-  adminNotes: string; // Internal notes for board members (Hidden from public)
-  createdAt: FieldValue; // serverTimestamp() from Firestore
-  updatedAt: FieldValue; // serverTimestamp() from Firestore
+  trackingId: string; // 'CR-' + timestamp
+  category: string;
+  details: string;
+  evidenceUrls: string[]; // Storage paths (not public URLs) — resolved by admin via evidenceService
+  informantName: string;
+  informantContact: string;
+  location: {
+    address: string;
+    district: string; // อำเภอ
+    subdistrict: string; // ตำบล
+  };
+  status: "รอดำเนินการ" | "กำลังตรวจสอบ" | "ยุติเรื่อง";
+  adminNotes: string;
+  createdAt: FieldValue;
+  updatedAt: FieldValue;
+}
+```
+
+**Collection:** `admins/{firebaseUid}`
+
+```typescript
+interface Admin {
+  email: string;
+  name?: string;
+  active: boolean;
 }
 ```
 
 ---
 
-## 4. File Storage Structure (Firebase Storage)
+## 4. File Storage (Firebase Storage)
 
-- **Path Pattern:** `complaints/{trackingId}-{original_filename}`
-- **Rule:** Files must be uploaded to Storage _before_ writing to Firestore to ensure we have the `downloadURL` ready for the `evidenceUrls` array.
+- **Path:** `complaints/{trackingId}-{original_filename}`
+- Store **storage path** in `evidenceUrls`; admin reads via signed/getDownloadURL in `evidenceService.js`
 
 ---
 
-## 5. Core Workflows & Logic
+## 5. Core Workflows
 
-### 5.1 Submission Workflow (Public User)
+### 5.1 Public submission
+Anti-spam (5 per 3h via localStorage) → upload files → create Firestore doc → show trackingId.
 
-1. User fills the form and attaches a file (optional).
-2. Validate Anti-Spam limits (Client-side rate limiting via LocalStorage).
-3. If valid, Generate `trackingId` (e.g., `CR-1718192021`).
-4. Upload file(s) to Firebase Storage -> Get `downloadURL`.
-5. Create payload matching the `Complaint` interface.
-6. Insert document into Firestore `complaints` collection.
-7. Return success UI displaying the `trackingId` to the user.
+### 5.2 Public tracking
+Query by `trackingId`; return only `trackingId`, `status`, `updatedAt`.
 
-### 5.2 Anti-Spam Logic (Rate Limiting)
+### 5.3 Admin dashboard
+- Year filter (พ.ศ.) via `yearFilter.js` — cards/stats/recent table filter by selected year
+- Summary cards: `SummaryCards.jsx`
+- Print report: `complaintReport.js` + hidden iframe (`printDocument.js`) — Sarabun font
 
-- **Rule:** Maximum 5 submissions per 3 hours per user.
-- **Implementation:** - Use `localStorage.getItem('complaintLogs')` storing an array of timestamps.
-  - Filter timestamps older than 3 hours (3 _ 60 _ 60 \* 1000 ms).
-  - Check array length: If `>= 5`, block submission and return error message.
-  - If `< 5`, push `Date.now()` and update LocalStorage.
-
-### 5.3 Tracking Workflow (Public User)
-
-1. User inputs `trackingId`.
-2. Query Firestore: `collection('complaints')` where `trackingId === input`.
-3. Return ONLY `trackingId`, `status`, `updatedAt`.
-4. **Strict Constraint:** DO NOT fetch or display `details`, `evidenceUrls`, or `adminNotes` to the public frontend to prevent data leaks.
+### 5.4 Admin auth & session
+- Login via Firebase Auth; verify `admins/{uid}` or email fallback
+- Session expires 6 hours after login; checked every minute
+- Keys: `adminSessionExpiry` in localStorage
 
 ---
 
 ## 6. AI Agent Coding Guidelines
 
-When generating code for this project, the AI Agent MUST follow these rules:
+1. **Firebase v9+ modular syntax only**
+2. **Functional components + hooks**
+3. **Thai UI text**, English code identifiers
+4. **Never commit** `.env.local`, service accounts, or PII
+5. **Security:** Rules enforce access; never expose admin fields on public pages
+6. **Print reports:** Use `printComplaintReport()` (async, iframe) — not `window.open` for primary flow
 
-1. **Firebase v9+ Only:** Always use the modular syntax for Firebase (`import { ref, uploadBytes } from 'firebase/storage'`). DO NOT use the compat/namespaced syntax (`firebase.storage()`).
-2. **Component Structure:** Use functional components with hooks (`useState`, `useEffect`).
-3. **Error Handling:** Wrap all async Firebase operations in `try-catch` blocks and implement loading states (`isLoading`).
-4. **Language:** UI text, alerts, and placeholders must be in Thai. Code variables and functions must be in English.
-5. **Security First:** Never expose admin-only fields in public components. Assume the frontend is public.
+---
+
+## 7. Location Data
+
+Chiang Rai districts/tambons: `src/data/chiangrai-locations.json` (18 districts, 124 tambons)

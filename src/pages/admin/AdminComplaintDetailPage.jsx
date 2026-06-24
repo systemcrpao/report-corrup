@@ -91,15 +91,10 @@ export default function AdminComplaintDetailPage() {
   const updated = toDate(complaint.updatedAt);
 
   function handlePrintReport() {
-    try {
-      printComplaintReport({ ...complaint, status, adminNotes: adminNotes.trim() });
-    } catch (err) {
-      if (err?.message === "POPUP_BLOCKED") {
-        setError("เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต popup แล้วลองใหม่");
-      } else {
-        setError("ไม่สามารถสร้างรายงานได้");
-      }
-    }
+    setError("");
+    printComplaintReport({ ...complaint, status, adminNotes: adminNotes.trim() }).catch(() => {
+      setError("ไม่สามารถสร้างรายงานได้ กรุณาลองใหม่อีกครั้ง");
+    });
   }
 
   return (
