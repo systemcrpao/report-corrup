@@ -50,7 +50,7 @@ export default function AdminLoginPage() {
       <div className="admin-login-brand">
         <div className="admin-login-brand-inner">
           <span className="admin-login-badge">อบจ.เชียงราย</span>
-          <h1>ระบบบริหารจัดการเรื่องร้องเรียน</h1>
+          <h1>ระบบบริหารจัดการเรื่องร้องเรียนการทุจริต ประพฤติมิชอบ การละเว้นการปฏิบัติหน้าที่ของเจ้าหน้าที่</h1>
           <p>แพลตฟอร์มสำหรับเจ้าหน้าที่ตรวจสอบ ติดตาม และสรุปรายงานเรื่องร้องเรียนการทุจริต</p>
           <ul className="admin-login-features">
             <li>ดูรายการเรื่องร้องเรียนทั้งหมด</li>

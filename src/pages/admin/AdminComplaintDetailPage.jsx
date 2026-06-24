@@ -6,6 +6,7 @@ import { updateComplaint } from "../../services/adminService.js";
 import { resolveEvidenceUrls } from "../../services/evidenceService.js";
 import { toDate, formatThaiDateTime } from "../../utils/statsUtils.js";
 import { COMPLAINT_STATUS_OPTIONS } from "../../types/complaint.js";
+import { printComplaintReport } from "../../utils/complaintReport.js";
 
 export default function AdminComplaintDetailPage() {
   const { id } = useParams();
@@ -89,6 +90,18 @@ export default function AdminComplaintDetailPage() {
   const created = toDate(complaint.createdAt);
   const updated = toDate(complaint.updatedAt);
 
+  function handlePrintReport() {
+    try {
+      printComplaintReport({ ...complaint, status, adminNotes: adminNotes.trim() });
+    } catch (err) {
+      if (err?.message === "POPUP_BLOCKED") {
+        setError("เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต popup แล้วลองใหม่");
+      } else {
+        setError("ไม่สามารถสร้างรายงานได้");
+      }
+    }
+  }
+
   return (
     <section className="admin-page">
       <header className="section-header-inline">
@@ -96,9 +109,14 @@ export default function AdminComplaintDetailPage() {
           <h2>รายละเอียดเรื่องร้องเรียน</h2>
           <p>{complaint.trackingId}</p>
         </div>
-        <Link to="/admin/complaints" className="btn btn-secondary">
-          กลับรายการ
-        </Link>
+        <div className="detail-header-actions">
+          <button type="button" className="btn btn-primary" onClick={handlePrintReport}>
+            พิมพ์รายงานเสนอผู้บริหาร
+          </button>
+          <Link to="/admin/complaints" className="btn btn-secondary">
+            กลับรายการ
+          </Link>
+        </div>
       </header>
 
       <div className="detail-grid">

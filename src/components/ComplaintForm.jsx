@@ -14,7 +14,7 @@ import {
 
 const MAX_FILES = 5;
 
-export default function ComplaintForm({ onSuccess }) {
+export default function ComplaintForm({ onSubmitStart, onSuccess, onError, isLocked = false }) {
   const [category, setCategory] = useState("");
   const [details, setDetails] = useState("");
   const [incidentAddress, setIncidentAddress] = useState("");
@@ -107,6 +107,7 @@ export default function ComplaintForm({ onSuccess }) {
     }
 
     setIsLoading(true);
+    onSubmitStart?.();
 
     try {
       const newTrackingId = await submitComplaint({
@@ -136,6 +137,7 @@ export default function ComplaintForm({ onSuccess }) {
       onSuccess(newTrackingId);
     } catch (err) {
       console.error(err);
+      onError?.();
       const code = err?.code ?? "";
 
       if (code === "storage/unauthorized" || code === "storage/permission-denied") {
@@ -158,7 +160,7 @@ export default function ComplaintForm({ onSuccess }) {
           id="category"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          disabled={isLoading}
+          disabled={isLoading || isLocked}
           required
         >
           <option value="">-- เลือกประเภท --</option>
@@ -178,7 +180,7 @@ export default function ComplaintForm({ onSuccess }) {
           onChange={(e) => setDetails(e.target.value)}
           rows={6}
           placeholder="อธิบายพฤติการณ์ วันเวลา บุคคลที่เกี่ยวข้อง และรายละเอียดการทุจริต"
-          disabled={isLoading}
+          disabled={isLoading || isLocked}
           required
         />
       </div>
@@ -199,7 +201,7 @@ export default function ComplaintForm({ onSuccess }) {
             type="checkbox"
             checked={isAnonymous}
             onChange={(e) => setIsAnonymous(e.target.checked)}
-            disabled={isLoading}
+            disabled={isLoading || isLocked}
           />
           แจ้งเรื่องแบบไม่เปิดเผยตัวตน (Anonymous)
         </label>
@@ -215,7 +217,7 @@ export default function ComplaintForm({ onSuccess }) {
               value={informantName}
               onChange={(e) => setInformantName(e.target.value)}
               placeholder="ชื่อ-นามสกุลผู้แจ้ง"
-              disabled={isLoading}
+              disabled={isLoading || isLocked}
             />
           </div>
 
@@ -227,7 +229,7 @@ export default function ComplaintForm({ onSuccess }) {
               value={informantContact}
               onChange={(e) => setInformantContact(e.target.value)}
               placeholder="example@email.com หรือ 08x-xxx-xxxx"
-              disabled={isLoading}
+              disabled={isLoading || isLocked}
             />
           </div>
         </>
@@ -256,7 +258,7 @@ export default function ComplaintForm({ onSuccess }) {
                   type="button"
                   className="btn-text"
                   onClick={() => removeFile(index)}
-                  disabled={isLoading}
+                  disabled={isLoading || isLocked}
                 >
                   ลบ
                 </button>
@@ -272,7 +274,7 @@ export default function ComplaintForm({ onSuccess }) {
         </div>
       )}
 
-      <button type="submit" className="btn btn-primary btn-block" disabled={isLoading}>
+      <button type="submit" className="btn btn-primary btn-block" disabled={isLoading || isLocked}>
         {isLoading ? "กำลังส่งเรื่อง..." : "ส่งเรื่องร้องเรียน"}
       </button>
     </form>

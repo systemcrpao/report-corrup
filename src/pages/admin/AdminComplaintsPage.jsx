@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { fetchAllComplaints } from "../../services/adminService.js";
 import { toDate, formatThaiDateTime } from "../../utils/statsUtils.js";
 import { COMPLAINT_STATUS_OPTIONS } from "../../types/complaint.js";
+import { printComplaintReport } from "../../utils/complaintReport.js";
 
 function getStatusClass(status) {
   switch (status) {
@@ -70,6 +71,18 @@ export default function AdminComplaintsPage() {
         .some((value) => String(value).toLowerCase().includes(keyword));
     });
   }, [complaints, search, statusFilter, districtFilter]);
+
+  function handlePrintReport(item) {
+    try {
+      printComplaintReport(item);
+    } catch (err) {
+      if (err?.message === "POPUP_BLOCKED") {
+        setError("เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต popup แล้วลองใหม่");
+      } else {
+        setError("ไม่สามารถสร้างรายงานได้");
+      }
+    }
+  }
 
   if (isLoading) {
     return <p>กำลังโหลดข้อมูล...</p>;
@@ -146,10 +159,17 @@ export default function AdminComplaintsPage() {
                       </span>
                     </td>
                     <td>{created ? formatThaiDateTime(created) : "-"}</td>
-                    <td>
+                    <td className="action-cell">
                       <Link to={`/admin/complaints/${item.id}`} className="btn btn-secondary btn-sm">
                         ดูรายละเอียด
                       </Link>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handlePrintReport(item)}
+                      >
+                        รายงาน
+                      </button>
                     </td>
                   </tr>
                 );

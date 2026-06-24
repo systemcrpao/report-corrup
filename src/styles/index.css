@@ -73,6 +73,19 @@ a {
   display: flex;
   align-items: center;
   gap: 1rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #fff;
+  padding: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
 }
 
 .brand-badge {
@@ -103,10 +116,36 @@ a {
 }
 
 .nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.5rem 0.9rem;
   border-radius: 999px;
   font-size: 0.95rem;
-  transition: background 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.nav-icon {
+  display: inline-flex;
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.nav-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.nav-link-staff {
+  margin-left: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(201, 162, 39, 0.18);
+}
+
+.nav-link-staff:hover,
+.nav-link-staff.active {
+  background: rgba(201, 162, 39, 0.32);
+  border-color: rgba(201, 162, 39, 0.55);
 }
 
 .nav-link:hover,
@@ -166,6 +205,47 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+.privacy-banner {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: start;
+  background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius);
+  padding: 1.35rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.privacy-banner-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  margin-top: 0.15rem;
+}
+
+.privacy-banner h3 {
+  margin: 0 0 0.5rem;
+  color: var(--color-primary);
+  font-size: 1.1rem;
+}
+
+.privacy-banner p {
+  margin: 0 0 0.75rem;
+  color: var(--color-muted);
+}
+
+.privacy-points {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #334155;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.privacy-points li {
+  line-height: 1.55;
 }
 
 .info-grid {
@@ -465,6 +545,92 @@ a {
   margin: 0 0 1rem;
 }
 
+.submit-modal-overlay {
+  backdrop-filter: blur(4px);
+}
+
+.submit-modal-card {
+  text-align: center;
+  width: min(440px, 100%);
+}
+
+.submit-modal-card.is-success {
+  animation: modalPop 0.35s ease;
+}
+
+.submit-spinner {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 1rem;
+  border: 4px solid #dbeafe;
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+.submit-modal-lead {
+  color: var(--color-muted);
+  margin: 0 0 1rem;
+}
+
+.submit-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+  text-align: left;
+}
+
+.submit-steps li {
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-muted);
+  font-size: 0.92rem;
+}
+
+.submit-steps li.active {
+  background: #eff6ff;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.submit-steps li.done {
+  background: #ecfdf3;
+  color: var(--color-success);
+}
+
+.submit-success-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: #ecfdf3;
+  color: var(--color-success);
+  display: grid;
+  place-items: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 @media (max-width: 640px) {
   .header-inner {
     flex-direction: column;
@@ -754,13 +920,17 @@ a {
 .admin-header {
   background: #102a4c;
   color: #fff;
-  padding: 1.25rem 0;
+  padding: 1.25rem 0 1.5rem;
 }
 
 .admin-header-inner,
 .admin-body {
   display: grid;
   gap: 1rem;
+}
+
+.admin-body {
+  padding-top: 1.75rem;
 }
 
 .admin-header-inner {
@@ -797,11 +967,16 @@ a {
 }
 
 .admin-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.55rem 0.9rem;
   border-radius: 999px;
   background: #fff;
   border: 1px solid var(--color-border);
   font-weight: 600;
+  color: inherit;
+  text-decoration: none;
 }
 
 .admin-nav a.active {
@@ -811,7 +986,7 @@ a {
 }
 
 .admin-main {
-  padding-bottom: 2rem;
+  padding: 1.25rem 0 2.5rem;
 }
 
 .admin-page {
@@ -825,6 +1000,13 @@ a {
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.detail-header-actions,
+.action-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .summary-cards {
@@ -1003,6 +1185,10 @@ a {
 }
 
 @media (max-width: 900px) {
+  .privacy-banner {
+    grid-template-columns: 1fr;
+  }
+
   .admin-login-shell {
     grid-template-columns: 1fr;
   }
