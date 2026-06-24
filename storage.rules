@@ -1,0 +1,22 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /complaints/{fileName} {
+      // บุคคลทั่วไปอัปโหลดหลักฐานได้ (ไม่ต้อง login)
+      allow create: if request.resource.size > 0
+        && request.resource.size < 10 * 1024 * 1024
+        && fileName.matches('CR-[0-9]+-.+')
+        && (
+          request.resource.contentType.matches('image/jpeg|image/png|image/webp|application/pdf')
+          || request.resource.contentType == 'application/octet-stream'
+        );
+
+      // เฉพาะ admin อ่าน/ดาวน์โหลดหลักฐานได้
+      allow read: if request.auth != null
+        && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+
+      allow update, delete: if false;
+    }
+  }
+}

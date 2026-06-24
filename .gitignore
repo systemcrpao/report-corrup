@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Environment & secrets (NEVER commit)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.production.local
+*.pem
+*.key
+credentials.json
+serviceAccount*.json
+
+# Firebase / Vercel local
+.firebase/
+.vercel/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.runtimeconfig.json
+
+# Large temp data
+scripts/th-provinces-full.json
+
+# OS & editor
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test coverage
+coverage/
