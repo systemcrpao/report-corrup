@@ -408,6 +408,16 @@ a {
   background: var(--color-bg);
 }
 
+.btn-danger {
+  background: #fff;
+  color: var(--color-error);
+  border: 1px solid #fecdca;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--color-error-bg);
+}
+
 .btn-block {
   width: 100%;
 }
@@ -438,6 +448,16 @@ a {
   background: var(--color-warning-bg);
   color: var(--color-warning);
   border: 1px solid #fedf89;
+}
+
+.required-mark {
+  color: var(--color-error);
+}
+
+.field-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
 }
 
 .tracking-panel {
@@ -474,6 +494,97 @@ a {
   margin: 1rem 0 0;
   font-size: 0.85rem;
   color: var(--color-muted);
+}
+
+.status-timeline {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.status-timeline h4 {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  color: var(--color-primary);
+}
+
+.status-timeline ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.status-timeline-item {
+  padding: 0.85rem 1rem;
+  background: var(--color-bg);
+  border-radius: 8px;
+  border-left: 3px solid var(--color-primary);
+}
+
+.status-timeline-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.status-timeline-head time {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.status-timeline-detail {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.status-history-admin {
+  margin-bottom: 1rem;
+}
+
+.status-history-admin h4 {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  color: var(--color-primary);
+}
+
+.status-history-admin ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.status-history-admin li {
+  padding: 0.65rem 0.75rem;
+  background: var(--color-bg);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.status-history-admin li strong {
+  display: block;
+  color: var(--color-primary);
+}
+
+.status-history-admin li span {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  margin: 0.15rem 0 0.35rem;
+}
+
+.status-history-admin li p {
+  margin: 0;
+  white-space: pre-wrap;
 }
 
 .status-badge {

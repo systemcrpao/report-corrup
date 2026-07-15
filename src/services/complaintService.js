@@ -1,9 +1,9 @@
 import { ref, uploadBytes } from "firebase/storage";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db, storage } from "../firebase.js";
 import { generateTrackingId } from "../utils/trackingId.js";
 import { CHIANG_RAI_PROVINCE } from "../data/chiangrai-locations.js";
-import { COMPLAINT_STATUS } from "../types/complaint.js";
+import { COMPLAINT_STATUS, INITIAL_STATUS_DETAIL } from "../types/complaint.js";
 
 /**
  * @param {File} file
@@ -73,6 +73,13 @@ export async function submitComplaint(formData) {
     informantContact: formData.isAnonymous ? "" : formData.informantContact.trim(),
     status: COMPLAINT_STATUS.PENDING,
     adminNotes: "",
+    statusHistory: [
+      {
+        status: COMPLAINT_STATUS.PENDING,
+        detail: INITIAL_STATUS_DETAIL,
+        updatedAt: Timestamp.now(),
+      },
+    ],
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };

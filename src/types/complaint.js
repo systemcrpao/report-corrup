@@ -9,6 +9,13 @@
  */
 
 /**
+ * @typedef {Object} StatusHistoryEntry
+ * @property {ComplaintStatus} status
+ * @property {string} detail
+ * @property {import('firebase/firestore').Timestamp | null} updatedAt
+ */
+
+/**
  * @typedef {Object} Complaint
  * @property {string} trackingId
  * @property {string} category
@@ -19,6 +26,7 @@
  * @property {string} informantContact
  * @property {ComplaintStatus} status
  * @property {string} adminNotes
+ * @property {StatusHistoryEntry[]} [statusHistory]
  * @property {import('firebase/firestore').FieldValue} createdAt
  * @property {import('firebase/firestore').FieldValue} updatedAt
  */
@@ -28,6 +36,7 @@
  * @property {string} trackingId
  * @property {ComplaintStatus} status
  * @property {import('firebase/firestore').Timestamp | null} updatedAt
+ * @property {StatusHistoryEntry[]} statusHistory
  */
 
 export const COMPLAINT_CATEGORIES = [
@@ -44,6 +53,8 @@ export const COMPLAINT_STATUS = {
 };
 
 export const COMPLAINT_STATUS_OPTIONS = Object.values(COMPLAINT_STATUS);
+
+export const INITIAL_STATUS_DETAIL = "ได้รับเรื่องร้องเรียนแล้ว อยู่ระหว่างรอดำเนินการ";
 
 export const MAX_FILE_SIZE_MB = 10;
 export const ALLOWED_FILE_TYPES = [

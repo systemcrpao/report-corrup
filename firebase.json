@@ -2,7 +2,10 @@
   "firestore": {
     "rules": "firestore.rules"
   },
-  "storage": {
-    "rules": "storage.rules"
-  }
+  "storage": [
+    {
+      "bucket": "report-corrup-cr.firebasestorage.app",
+      "rules": "storage.rules"
+    }
+  ]
 }

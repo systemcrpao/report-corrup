@@ -24,12 +24,14 @@ service cloud.firestore {
       allow create: if request.resource.data.keys().hasAll([
           'trackingId', 'category', 'details', 'location', 'evidenceUrls',
           'informantName', 'informantContact', 'status', 'adminNotes',
-          'createdAt', 'updatedAt'
+          'statusHistory', 'createdAt', 'updatedAt'
         ])
         && request.resource.data.trackingId is string
         && request.resource.data.trackingId.matches('CR-[0-9]+')
         && request.resource.data.status == 'รอดำเนินการ'
         && request.resource.data.adminNotes == ''
+        && request.resource.data.statusHistory is list
+        && request.resource.data.statusHistory.size() >= 1
         && request.resource.data.evidenceUrls is list
         && request.resource.data.location is map
         && request.resource.data.location.keys().hasAll([
@@ -46,7 +48,7 @@ service cloud.firestore {
 
       allow update: if isAdmin()
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['status', 'adminNotes', 'updatedAt']);
+          .hasOnly(['status', 'adminNotes', 'statusHistory', 'updatedAt']);
 
       allow delete: if isAdmin();
     }

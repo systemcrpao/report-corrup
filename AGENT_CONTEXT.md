@@ -39,6 +39,7 @@ interface Complaint {
   };
   status: "รอดำเนินการ" | "กำลังตรวจสอบ" | "ยุติเรื่อง";
   adminNotes: string;
+  statusHistory: Array<{ status: string; detail: string; updatedAt: Timestamp }>;
   createdAt: FieldValue;
   updatedAt: FieldValue;
 }
@@ -69,12 +70,14 @@ interface Admin {
 Anti-spam (5 per 3h via localStorage) → upload files → create Firestore doc → show trackingId.
 
 ### 5.2 Public tracking
-Query by `trackingId`; return only `trackingId`, `status`, `updatedAt`.
+Query by `trackingId`; return `trackingId`, `status`, `updatedAt`, `statusHistory` (public messages only).
 
 ### 5.3 Admin dashboard
 - Year filter (พ.ศ.) via `yearFilter.js` — cards/stats/recent table filter by selected year
 - Summary cards: `SummaryCards.jsx`
 - Print report: `complaintReport.js` + hidden iframe (`printDocument.js`) — Sarabun font
+- Delete complaint: `deleteComplaint()` — removes Firestore doc + Storage evidence (admin only)
+- Status change: require public `detail` message → append to `statusHistory` (shown on track page)
 
 ### 5.4 Admin auth & session
 - Login via Firebase Auth; verify `admins/{uid}` or email fallback

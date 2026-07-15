@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../firebase.js";
-import { updateComplaint } from "../../services/adminService.js";
+import { updateComplaint, deleteComplaint } from "../../services/adminService.js";
 import { resolveEvidenceUrls } from "../../services/evidenceService.js";
 import { toDate, formatThaiDateTime } from "../../utils/statsUtils.js";
 import { COMPLAINT_STATUS_OPTIONS } from "../../types/complaint.js";
@@ -10,11 +10,14 @@ import { printComplaintReport } from "../../utils/complaintReport.js";
 
 export default function AdminComplaintDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [complaint, setComplaint] = useState(null);
   const [status, setStatus] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
+  const [publicStatusDetail, setPublicStatusDetail] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [evidenceLinks, setEvidenceLinks] = useState([]);
@@ -58,17 +61,75 @@ export default function AdminComplaintDetailPage() {
     event.preventDefault();
     setMessage("");
     setError("");
+
+    const statusChanged = status !== complaint.status;
+    const trimmedDetail = publicStatusDetail.trim();
+
+    if (statusChanged && !trimmedDetail) {
+      setError("กรุณากรอกรายละเอียดแจ้งผู้ร้องเรียน เมื่อเปลี่ยนสถานะ");
+      return;
+    }
+
     setIsSaving(true);
 
     try {
-      await updateComplaint(id, { status, adminNotes: adminNotes.trim() });
+      /** @type {import('../../types/complaint.js').StatusHistoryEntry[]} */
+      let nextHistory = complaint.statusHistory ?? [];
+
+      if (statusChanged) {
+        nextHistory = [
+          ...nextHistory,
+          {
+            status,
+            detail: trimmedDetail,
+            updatedAt: Timestamp.now(),
+          },
+        ];
+      }
+
+      await updateComplaint(id, {
+        status,
+        adminNotes: adminNotes.trim(),
+        ...(statusChanged ? { statusHistory: nextHistory } : {}),
+      });
+
       setMessage("บันทึกข้อมูลเรียบร้อยแล้ว");
-      setComplaint((prev) => ({ ...prev, status, adminNotes: adminNotes.trim() }));
+      setComplaint((prev) => ({
+        ...prev,
+        status,
+        adminNotes: adminNotes.trim(),
+        ...(statusChanged ? { statusHistory: nextHistory } : {}),
+      }));
+      setPublicStatusDetail("");
     } catch (err) {
       console.error(err);
       setError("ไม่สามารถบันทึกข้อมูลได้");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    const confirmed = window.confirm(
+      `ยืนยันการลบเรื่อง ${complaint.trackingId}?\n\nการลบไม่สามารถกู้คืนได้ และจะลบไฟล์หลักฐานที่เกี่ยวข้องด้วย`
+    );
+
+    if (!confirmed) return;
+
+    setError("");
+    setMessage("");
+    setIsDeleting(true);
+
+    try {
+      await deleteComplaint(id, complaint.evidenceUrls ?? []);
+      navigate("/admin/complaints", {
+        replace: true,
+        state: { notice: `ลบเรื่อง ${complaint.trackingId} เรียบร้อยแล้ว` },
+      });
+    } catch (err) {
+      console.error(err);
+      setError("ไม่สามารถลบเรื่องได้ กรุณาลองใหม่อีกครั้ง");
+      setIsDeleting(false);
     }
   }
 
@@ -89,6 +150,7 @@ export default function AdminComplaintDetailPage() {
 
   const created = toDate(complaint.createdAt);
   const updated = toDate(complaint.updatedAt);
+  const statusChanged = status !== complaint.status;
 
   function handlePrintReport() {
     setError("");
@@ -107,6 +169,14 @@ export default function AdminComplaintDetailPage() {
         <div className="detail-header-actions">
           <button type="button" className="btn btn-primary" onClick={handlePrintReport}>
             พิมพ์รายงานเสนอผู้บริหาร
+          </button>
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={handleDelete}
+            disabled={isDeleting || isSaving}
+          >
+            {isDeleting ? "กำลังลบ..." : "ลบเรื่อง"}
           </button>
           <Link to="/admin/complaints" className="btn btn-secondary">
             กลับรายการ
@@ -191,7 +261,7 @@ export default function AdminComplaintDetailPage() {
                 id="status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                disabled={isSaving}
+                disabled={isSaving || isDeleting}
               >
                 {COMPLAINT_STATUS_OPTIONS.map((item) => (
                   <option key={item} value={item}>
@@ -201,6 +271,23 @@ export default function AdminComplaintDetailPage() {
               </select>
             </div>
 
+            {statusChanged && (
+              <div className="form-group">
+                <label htmlFor="publicStatusDetail">
+                  รายละเอียดแจ้งผู้ร้องเรียน <span className="required-mark">*</span>
+                </label>
+                <textarea
+                  id="publicStatusDetail"
+                  rows={4}
+                  value={publicStatusDetail}
+                  onChange={(e) => setPublicStatusDetail(e.target.value)}
+                  placeholder="ข้อความนี้จะแสดงในหน้าติดตามสถานะให้ผู้ร้องเรียนเห็น"
+                  disabled={isSaving || isDeleting}
+                />
+                <p className="field-hint">จำเป็นเมื่อเปลี่ยนสถานะ — ไม่แสดงบันทึกภายใน</p>
+              </div>
+            )}
+
             <div className="form-group">
               <label htmlFor="adminNotes">บันทึกภายใน (เจ้าหน้าที่)</label>
               <textarea
@@ -208,15 +295,33 @@ export default function AdminComplaintDetailPage() {
                 rows={5}
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
-                placeholder="บันทึกการดำเนินการภายใน"
-                disabled={isSaving}
+                placeholder="บันทึกการดำเนินการภายใน — ไม่แสดงต่อผู้ร้องเรียน"
+                disabled={isSaving || isDeleting}
               />
             </div>
+
+            {complaint.statusHistory?.length > 0 && (
+              <div className="status-history-admin">
+                <h4>ประวัติที่แจ้งผู้ร้องเรียนแล้ว</h4>
+                <ul>
+                  {[...complaint.statusHistory].reverse().map((entry, index) => {
+                    const entryDate = toDate(entry.updatedAt);
+                    return (
+                      <li key={`${entry.status}-${index}`}>
+                        <strong>{entry.status}</strong>
+                        <span>{entryDate ? formatThaiDateTime(entryDate) : "-"}</span>
+                        <p>{entry.detail}</p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
 
             {message && <div className="alert alert-success">{message}</div>}
             {error && <div className="alert alert-error">{error}</div>}
 
-            <button type="submit" className="btn btn-primary" disabled={isSaving}>
+            <button type="submit" className="btn btn-primary" disabled={isSaving || isDeleting}>
               {isSaving ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
             </button>
           </form>

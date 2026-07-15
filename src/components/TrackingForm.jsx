@@ -58,6 +58,10 @@ export default function TrackingForm() {
     }
   }
 
+  const historyItems = result?.statusHistory
+    ? [...result.statusHistory].reverse()
+    : [];
+
   return (
     <div className="tracking-panel">
       <form className="form-card" onSubmit={handleSubmit}>
@@ -99,7 +103,7 @@ export default function TrackingForm() {
               <dd>{result.trackingId}</dd>
             </div>
             <div>
-              <dt>สถานะ</dt>
+              <dt>สถานะปัจจุบัน</dt>
               <dd>
                 <span className={`status-badge ${getStatusClass(result.status)}`}>
                   {result.status}
@@ -111,8 +115,30 @@ export default function TrackingForm() {
               <dd>{formatTimestamp(result.updatedAt)}</dd>
             </div>
           </dl>
+
+          {historyItems.length > 0 && (
+            <div className="status-timeline">
+              <h4>ประวัติการดำเนินการ</h4>
+              <ol>
+                {historyItems.map((entry, index) => (
+                  <li key={`${entry.status}-${index}`} className="status-timeline-item">
+                    <div className="status-timeline-head">
+                      <span className={`status-badge ${getStatusClass(entry.status)}`}>
+                        {entry.status}
+                      </span>
+                      <time>{formatTimestamp(entry.updatedAt)}</time>
+                    </div>
+                    {entry.detail ? (
+                      <p className="status-timeline-detail">{entry.detail}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
           <p className="result-note">
-            ระบบแสดงเฉพาะสถานะการดำเนินการเพื่อความปลอดภัยของข้อมูล
+            ระบบแสดงเฉพาะสถานะและรายละเอียดการดำเนินการ — ไม่แสดงข้อมูลส่วนตัวหรือหลักฐาน
           </p>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { fetchAllComplaints } from "../../services/adminService.js";
 import { toDate, formatThaiDateTime } from "../../utils/statsUtils.js";
 import { COMPLAINT_STATUS_OPTIONS } from "../../types/complaint.js";
@@ -19,12 +19,14 @@ function getStatusClass(status) {
 }
 
 export default function AdminComplaintsPage() {
+  const location = useLocation();
   const [complaints, setComplaints] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [districtFilter, setDistrictFilter] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState(location.state?.notice ?? "");
 
   useEffect(() => {
     async function loadData() {
@@ -93,6 +95,8 @@ export default function AdminComplaintsPage() {
         <h2>รายการเรื่องร้องเรียน</h2>
         <p>ทั้งหมด {filtered.length} เรื่อง</p>
       </header>
+
+      {notice && <div className="alert alert-success">{notice}</div>}
 
       <div className="filter-bar">
         <input

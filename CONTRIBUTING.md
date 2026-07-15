@@ -36,7 +36,7 @@ npm run dev
 หลังแก้ `firestore.rules` หรือ `storage.rules`:
 
 ```powershell
-firebase deploy --only firestore:rules,storage:rules
+firebase deploy --only firestore:rules,storage
 ```
 
 อ่านเพิ่มเติม: [SECURITY.md](./SECURITY.md), [README.md](./README.md)
