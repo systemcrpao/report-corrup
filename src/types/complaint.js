@@ -36,6 +36,7 @@
  * @property {string} trackingId
  * @property {ComplaintStatus} status
  * @property {import('firebase/firestore').Timestamp | null} updatedAt
+ * @property {string} adminNotes
  * @property {StatusHistoryEntry[]} statusHistory
  */
 

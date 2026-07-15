@@ -14,7 +14,6 @@ export default function AdminComplaintDetailPage() {
   const [complaint, setComplaint] = useState(null);
   const [status, setStatus] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
-  const [publicStatusDetail, setPublicStatusDetail] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -63,10 +62,11 @@ export default function AdminComplaintDetailPage() {
     setError("");
 
     const statusChanged = status !== complaint.status;
-    const trimmedDetail = publicStatusDetail.trim();
+    const trimmedNotes = adminNotes.trim();
+    const notesChanged = trimmedNotes !== (complaint.adminNotes ?? "").trim();
 
-    if (statusChanged && !trimmedDetail) {
-      setError("กรุณากรอกรายละเอียดแจ้งผู้ร้องเรียน เมื่อเปลี่ยนสถานะ");
+    if (statusChanged && !trimmedNotes) {
+      setError("กรุณากรอกบันทึก/ความเห็นเจ้าหน้าที่ เมื่อเปลี่ยนสถานะ");
       return;
     }
 
@@ -75,13 +75,14 @@ export default function AdminComplaintDetailPage() {
     try {
       /** @type {import('../../types/complaint.js').StatusHistoryEntry[]} */
       let nextHistory = complaint.statusHistory ?? [];
+      const shouldAppendHistory = (statusChanged || notesChanged) && trimmedNotes;
 
-      if (statusChanged) {
+      if (shouldAppendHistory) {
         nextHistory = [
           ...nextHistory,
           {
             status,
-            detail: trimmedDetail,
+            detail: trimmedNotes,
             updatedAt: Timestamp.now(),
           },
         ];
@@ -89,18 +90,17 @@ export default function AdminComplaintDetailPage() {
 
       await updateComplaint(id, {
         status,
-        adminNotes: adminNotes.trim(),
-        ...(statusChanged ? { statusHistory: nextHistory } : {}),
+        adminNotes: trimmedNotes,
+        ...(shouldAppendHistory ? { statusHistory: nextHistory } : {}),
       });
 
       setMessage("บันทึกข้อมูลเรียบร้อยแล้ว");
       setComplaint((prev) => ({
         ...prev,
         status,
-        adminNotes: adminNotes.trim(),
-        ...(statusChanged ? { statusHistory: nextHistory } : {}),
+        adminNotes: trimmedNotes,
+        ...(shouldAppendHistory ? { statusHistory: nextHistory } : {}),
       }));
-      setPublicStatusDetail("");
     } catch (err) {
       console.error(err);
       setError("ไม่สามารถบันทึกข้อมูลได้");
@@ -271,33 +271,24 @@ export default function AdminComplaintDetailPage() {
               </select>
             </div>
 
-            {statusChanged && (
-              <div className="form-group">
-                <label htmlFor="publicStatusDetail">
-                  รายละเอียดแจ้งผู้ร้องเรียน <span className="required-mark">*</span>
-                </label>
-                <textarea
-                  id="publicStatusDetail"
-                  rows={4}
-                  value={publicStatusDetail}
-                  onChange={(e) => setPublicStatusDetail(e.target.value)}
-                  placeholder="ข้อความนี้จะแสดงในหน้าติดตามสถานะให้ผู้ร้องเรียนเห็น"
-                  disabled={isSaving || isDeleting}
-                />
-                <p className="field-hint">จำเป็นเมื่อเปลี่ยนสถานะ — ไม่แสดงบันทึกภายใน</p>
-              </div>
-            )}
-
             <div className="form-group">
-              <label htmlFor="adminNotes">บันทึกภายใน (เจ้าหน้าที่)</label>
+              <label htmlFor="adminNotes">
+                บันทึก/ความเห็นเจ้าหน้าที่
+                {statusChanged ? <span className="required-mark"> *</span> : null}
+              </label>
               <textarea
                 id="adminNotes"
                 rows={5}
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
-                placeholder="บันทึกการดำเนินการภายใน — ไม่แสดงต่อผู้ร้องเรียน"
+                placeholder="ความเห็นและรายละเอียดการดำเนินการ — จะแสดงในหน้าติดตามสถานะให้ผู้ร้องเรียนเห็น"
                 disabled={isSaving || isDeleting}
               />
+              <p className="field-hint">
+                {statusChanged
+                  ? "จำเป็นเมื่อเปลี่ยนสถานะ — ข้อความนี้จะแสดงต่อผู้ร้องเรียน"
+                  : "ข้อความนี้จะแสดงต่อผู้ร้องเรียนในหน้าติดตามสถานะ"}
+              </p>
             </div>
 
             {complaint.statusHistory?.length > 0 && (

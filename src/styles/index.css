@@ -496,6 +496,39 @@ a {
   color: var(--color-muted);
 }
 
+.staff-notes-box {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+}
+
+.staff-notes-box h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--color-primary);
+}
+
+.staff-notes-box p {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.status-timeline-detail-block {
+  margin-top: 0.35rem;
+}
+
+.status-timeline-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  margin-bottom: 0.2rem;
+}
+
 .status-timeline {
   margin-top: 1.25rem;
   padding-top: 1.25rem;

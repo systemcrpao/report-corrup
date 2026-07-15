@@ -116,6 +116,13 @@ export default function TrackingForm() {
             </div>
           </dl>
 
+          {result.adminNotes ? (
+            <div className="staff-notes-box">
+              <h4>ความเห็นเจ้าหน้าที่ล่าสุด</h4>
+              <p>{result.adminNotes}</p>
+            </div>
+          ) : null}
+
           {historyItems.length > 0 && (
             <div className="status-timeline">
               <h4>ประวัติการดำเนินการ</h4>
@@ -129,7 +136,10 @@ export default function TrackingForm() {
                       <time>{formatTimestamp(entry.updatedAt)}</time>
                     </div>
                     {entry.detail ? (
-                      <p className="status-timeline-detail">{entry.detail}</p>
+                      <div className="status-timeline-detail-block">
+                        <span className="status-timeline-label">ความเห็นเจ้าหน้าที่</span>
+                        <p className="status-timeline-detail">{entry.detail}</p>
+                      </div>
                     ) : null}
                   </li>
                 ))}
@@ -138,7 +148,7 @@ export default function TrackingForm() {
           )}
 
           <p className="result-note">
-            ระบบแสดงเฉพาะสถานะและรายละเอียดการดำเนินการ — ไม่แสดงข้อมูลส่วนตัวหรือหลักฐาน
+            ระบบแสดงสถานะและความเห็นเจ้าหน้าที่ — ไม่แสดงข้อมูลส่วนตัวหรือหลักฐาน
           </p>
         </div>
       )}
